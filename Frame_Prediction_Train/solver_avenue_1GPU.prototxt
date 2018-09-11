@@ -1,0 +1,26 @@
+net: "avenue_lstm_frame4.prototxt"
+test_iter: 1018      
+test_interval: 10250# 
+test_initialization: false
+
+base_lr: 0.0001
+momentum: 0.9
+momentum2: 0.999
+weight_decay: 0.0005
+lr_policy: "fixed"
+
+#lr_policy: "inv"
+#gamma: 0.0001
+#power: 0.75
+
+display: 10
+max_iter: 1000000
+
+snapshot: 10250
+snapshot_prefix: "/nobackup/schtmt/conv_wta_lstm_model/convLSTM_prediction6_avenue/"
+
+solver_mode: GPU
+#type: "SGD"
+type: "Adam"
+#type: "RMSProp"
+#rms_decay: 0.9

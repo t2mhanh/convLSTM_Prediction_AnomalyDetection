@@ -1,0 +1,26 @@
+net: "entrance_augmentation_frame4.prototxt"
+test_iter: 1520 #620      # Validation Set: 2494/4 
+test_interval: 13000 #5500 # 20000/4
+test_initialization: false
+
+base_lr: 0.00001
+momentum: 0.9
+momentum2: 0.999
+weight_decay: 0.0005
+lr_policy: "fixed"
+
+#lr_policy: "inv"
+#gamma: 0.0001
+#power: 0.75
+
+display: 10
+max_iter: 1000000000
+
+snapshot: 13000 #5500 
+snapshot_prefix: "/nobackup/schtmt/conv_wta_lstm_model/prediction6_aug2_entrance_2/"
+
+solver_mode: GPU
+#type: "SGD"
+type: "Adam"
+#type: "RMSProp"
+#rms_decay: 0.9
