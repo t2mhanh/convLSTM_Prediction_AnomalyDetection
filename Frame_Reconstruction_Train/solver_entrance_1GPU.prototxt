@@ -1,0 +1,26 @@
+net: "entrance_lstm_frame4.prototxt"
+test_iter: 861      # Validation Set: 80000 / 64
+test_interval: 10000# IGNORE TESTING BECAUSE OF MEMORY PROBLEM 17838  # Every epoch 1141617/64
+test_initialization: false
+
+base_lr: 0.0001
+momentum: 0.9
+momentum2: 0.999
+weight_decay: 0.0005
+lr_policy: "fixed"
+
+#lr_policy: "inv"
+#gamma: 0.0001
+#power: 0.75
+
+display: 10
+max_iter: 1000000
+
+snapshot: 10000 
+snapshot_prefix: "/nobackup/schtmt/conv_wta_lstm_model/convLSTM_AE6_entrance/"
+
+solver_mode: GPU
+#type: "SGD"
+type: "Adam"
+#type: "RMSProp"
+#rms_decay: 0.9

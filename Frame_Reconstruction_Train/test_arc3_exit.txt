@@ -1,0 +1,3 @@
+/nobackup/schtmt/Adam_data/Exit/Exit_10xdata_5xRecons/train_vol_21.h5
+/nobackup/schtmt/Adam_data/Exit/Exit_10xdata_5xRecons/train_vol_22.h5
+/nobackup/schtmt/Adam_data/Exit/Exit_10xdata_5xRecons/train_vol_23.h5
