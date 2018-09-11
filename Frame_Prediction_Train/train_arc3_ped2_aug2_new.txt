@@ -1,0 +1,11 @@
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_1.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_2.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_3.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_4.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_5.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_6.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_7.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_8.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_9.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_10.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_10x1x227x227_aug_new/volume_combine/train_vol_11.h5

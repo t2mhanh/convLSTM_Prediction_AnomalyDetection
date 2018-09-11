@@ -1,0 +1,5 @@
+/nobackup/schtmt/Avenue_20x1x227x227/volume_combine/train_vol_42.h5
+/nobackup/schtmt/Avenue_20x1x227x227/volume_combine/train_vol_43.h5
+/nobackup/schtmt/Avenue_20x1x227x227/volume_combine/train_vol_44.h5
+/nobackup/schtmt/Avenue_20x1x227x227/volume_combine/train_vol_45.h5
+

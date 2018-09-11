@@ -1,0 +1,7 @@
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_20x1x227x227/volume_combine/train_vol_1.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_20x1x227x227/volume_combine/train_vol_2.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_20x1x227x227/volume_combine/train_vol_3.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_20x1x227x227/volume_combine/train_vol_4.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_20x1x227x227/volume_combine/train_vol_5.h5
+/nobackup/schtmt/home_temp/ucsd_data/Ped2_20x1x227x227/volume_combine/train_vol_6_1.h5
+

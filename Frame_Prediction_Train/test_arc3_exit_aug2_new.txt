@@ -1,0 +1,3 @@
+/nobackup/schtmt/home_temp/ucsd_data/Exit_10x1x227x227_aug_new/volume_combine/train_vol_28.h5
+/nobackup/schtmt/home_temp/ucsd_data/Exit_10x1x227x227_aug_new/volume_combine/train_vol_29.h5
+/nobackup/schtmt/home_temp/ucsd_data/Exit_10x1x227x227_aug_new/volume_combine/train_vol_30.h5

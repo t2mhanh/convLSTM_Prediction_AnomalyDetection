@@ -1,0 +1,4 @@
+/nobackup/schtmt/Adam_data/Entrance/NormalFrames/volume_combine/train_vol_41.h5
+/nobackup/schtmt/Adam_data/Entrance/NormalFrames/volume_combine/train_vol_42.h5
+/nobackup/schtmt/Adam_data/Entrance/NormalFrames/volume_combine/train_vol_43.h5
+/nobackup/schtmt/Adam_data/Entrance/NormalFrames/volume_combine/train_vol_44.h5

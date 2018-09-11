@@ -1,0 +1,7 @@
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_53.h5
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_54.h5
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_55.h5
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_56.h5
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_57.h5
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_58.h5
+/nobackup/schtmt/home_temp/ucsd_data/Entrance_10x1x227x227_aug_new/volume_combine/train_vol_59.h5

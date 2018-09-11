@@ -1,0 +1,6 @@
+/nobackup/schtmt/home_temp/ucsd_data/Avenue_10x1x227x227_aug2_new/volume_combine/train_vol_56.h5
+/nobackup/schtmt/home_temp/ucsd_data/Avenue_10x1x227x227_aug2_new/volume_combine/train_vol_57.h5
+/nobackup/schtmt/home_temp/ucsd_data/Avenue_10x1x227x227_aug2_new/volume_combine/train_vol_58.h5
+/nobackup/schtmt/home_temp/ucsd_data/Avenue_10x1x227x227_aug2_new/volume_combine/train_vol_59.h5
+/nobackup/schtmt/home_temp/ucsd_data/Avenue_10x1x227x227_aug2_new/volume_combine/train_vol_60.h5
+/nobackup/schtmt/home_temp/ucsd_data/Avenue_10x1x227x227_aug2_new/volume_combine/train_vol_61.h5
