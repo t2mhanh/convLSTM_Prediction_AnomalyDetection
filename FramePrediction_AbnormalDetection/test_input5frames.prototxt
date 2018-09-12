@@ -1,0 +1,767 @@
+
+# The shape of each input is 4x10x2x24x24 (N x T x C x H x W).
+
+
+# Sequence markers
+layer {
+  name: "sequence"
+  type: "HDF5Data"
+  top: "sequence"
+
+  hdf5_data_param {    
+    source: "seq1.txt"
+    batch_size: 10
+  }
+}
+
+# Slice the Sequence markers into an encoding and decoding phase.
+layer {
+  name: "slice_seq"
+  type: "Slice"
+  bottom: "sequence"
+
+  top: "seq_enc"
+  top: "seq_dec"
+
+  slice_param {
+    axis: 0
+    slice_point: 5
+  }
+}
+
+# Data layers. We choose HDF5 format here.
+# Reminder: Data has to be interleaved: v_t1_n1, v_t1_n2, ..., v_t2_n1, v_t2_n2, ..., v_tT_n1, v_tT_n2, ...
+layer {
+  name: "data"
+  type: "Input"
+  top: "input"      # The actual input data (Sequence of T frames)  
+
+  input_param { shape: {dim:1 dim:5 dim:1 dim:227 dim:227}
+ }
+}
+
+layer{
+  name: "input_permute"
+  type: "Permute"
+  top: "input_p"
+  bottom: "input"
+  permute_param {
+  order: 1
+  order: 0
+  order: 2
+  order: 3
+  order: 4
+  }
+}
+
+# input_p: T x N x C x H x W
+# slice to input and prediction match
+
+layer{
+  name: "input_reshape"
+  type: "Reshape"
+  bottom: "input_p"
+  top: "input_rs"
+  reshape_param{
+    shape{
+      dim: 5 #batch-size * 5
+      dim: 1
+      dim: 227
+      dim: 227
+    }
+  }
+}
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "input_rs"
+  top: "conv1"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 16
+    kernel_size: 11
+    stride: 4
+    pad: 0    
+    
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu1"
+  type: "ReLU"
+  bottom: "conv1"
+  top: "relu1"
+  relu_param{
+  negative_slope: 0.2
+  }
+}
+
+layer{
+  name: "relu1_reshape"
+  type: "Reshape"
+  bottom: "relu1"
+  top: "relu1_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 1
+      dim: 16
+      dim: 55
+      dim: 55
+    }
+  }
+}
+
+layer {
+  name: "dummy"
+  type: "DummyData"
+  top: "dummy1"
+
+  dummy_data_param {
+    shape {
+      dim: 1
+      dim: 1
+      dim: 16
+      dim: 55
+      dim: 55
+    }
+  }
+}
+
+
+# Encoding network. Reads in T timesteps of features
+# Input data of Conv-LSTM is shaped T x N x C x H x W (Use Reshape layer if necessary)
+
+layer {
+  name: "encode_lstm1"
+  type: "ConvLSTM"
+
+  bottom: "relu1_rs"     # Input features x
+  bottom: "seq_enc"   # Sequence markers
+
+  bottom: "dummy1"   # Dummy input h (required by `expose_hidden: true`)
+  bottom: "dummy1"   # Dummy input c
+
+  top: "encode1"
+  top: "encode1_h"    # Final hidden state (Shape: 1 x N x C x H x W)
+  top: "encode1_c"    # Final cell state
+
+  recurrent_param {
+    expose_hidden: true
+  }
+
+  lstm_debug_param{    
+    axis_hadamard: 3
+    num_axes_hadamard: 2
+  }
+
+  # Conv Layer specification
+  lstm_conv_param {
+    num_output: 16
+    kernel_size: 3
+    pad: 1                  # Padding is required! All conv. kernels need to result in the same H x W shape.
+
+    weight_filler {      
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer{
+  name: "encode1_reshape"
+  type: "Reshape"
+  bottom: "encode1"
+  top: "encode1_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 16
+      dim: 55
+      dim: 55
+    }
+  }
+}
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "encode1_rs"
+  top: "conv2"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 32
+    kernel_size: 3
+    stride: 2
+    pad: 0
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu2"
+  type: "ReLU"
+  bottom: "conv2"
+  top: "relu2"
+  relu_param{
+  negative_slope: 0.2
+  }
+}
+
+layer{
+  name: "relu2_reshape"
+  type: "Reshape"
+  bottom: "relu2"
+  top: "relu2_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 1
+      dim: 32
+      dim: 27
+      dim: 27
+    }
+  }
+}
+
+layer {
+  name: "dummy"
+  type: "DummyData"
+  top: "dummy2"
+
+  dummy_data_param {
+    shape {
+      dim: 1
+      dim: 1
+      dim: 32
+      dim: 27
+      dim: 27
+    }
+  }
+}
+
+
+# Encoding network. Reads in T timesteps of features
+# Input data of Conv-LSTM is shaped T x N x C x H x W (Use Reshape layer if necessary)
+
+layer {
+  name: "encode_lstm2"
+  type: "ConvLSTM"
+
+  bottom: "relu2_rs"     # Input features x
+  bottom: "seq_enc"   # Sequence markers
+
+  bottom: "dummy2"   # Dummy input h (required by `expose_hidden: true`)
+  bottom: "dummy2"   # Dummy input c
+
+  top: "encode2"
+  top: "encode2_h"    # Final hidden state (Shape: 1 x N x C x H x W)
+  top: "encode2_c"    # Final cell state
+
+  recurrent_param {
+    expose_hidden: true
+  }
+
+  lstm_debug_param{    
+    axis_hadamard: 3
+    num_axes_hadamard: 2
+  }
+
+  # Conv Layer specification
+  lstm_conv_param {
+    num_output: 32
+    kernel_size: 3
+    pad: 1                  # Padding is required! All conv. kernels need to result in the same H x W shape.
+
+    weight_filler {      
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer{
+  name: "encode1_reshape"
+  type: "Reshape"
+  bottom: "encode2"
+  top: "encode2_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 32
+      dim: 27
+      dim: 27
+    }
+  }
+}
+
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "encode2_rs"
+  top: "conv3"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 64
+    kernel_size: 3
+    stride: 2
+    pad: 0
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu3"
+  type: "ReLU"
+  bottom: "conv3"
+  top: "relu3"
+  relu_param{
+  negative_slope: 0.2
+  }
+}
+
+layer{
+  name: "relu3_reshape"
+  type: "Reshape"
+  bottom: "relu3"
+  top: "relu3_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 1
+      dim: 64
+      dim: 13
+      dim: 13
+    }
+  }
+}
+
+layer {
+  name: "dummy"
+  type: "DummyData"
+  top: "dummy3"
+
+  dummy_data_param {
+    shape {
+      dim: 1
+      dim: 1
+      dim: 64
+      dim: 13
+      dim: 13
+    }
+  }
+}
+
+layer {
+  name: "encode_lstm3"
+  type: "ConvLSTM"
+
+  bottom: "relu3_rs"     # Input features x
+  bottom: "seq_enc"   # Sequence markers
+
+  bottom: "dummy3"   # Dummy input h (required by `expose_hidden: true`)
+  bottom: "dummy3"   # Dummy input c
+
+  top: "encode3"
+  top: "encode3_h"    # Final hidden state (Shape: 1 x N x C x H x W)
+  top: "encode3_c"    # Final cell state
+
+  recurrent_param {
+    expose_hidden: true
+  }
+
+  lstm_debug_param{    
+    axis_hadamard: 3
+    num_axes_hadamard: 2
+  }
+
+  # Conv Layer specification
+  lstm_conv_param {
+    num_output: 64
+    kernel_size: 3
+    pad: 1                  # Padding is required! All conv. kernels need to result in the same H x W shape.
+
+    weight_filler {      
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+#### FORECAST ----------------------
+layer {
+  name: "input_decode1"
+  type: "DummyData"
+  top: "input_decode1"
+
+  dummy_data_param {
+    shape {
+      dim: 5
+      dim: 1 #batch-size      
+      dim: 64
+      dim: 13
+      dim: 13
+    }
+  }
+}
+
+layer {
+  name: "decode_lstm1"
+  type: "ConvLSTM"
+
+  bottom: "input_decode1"     # Input features x
+  bottom: "seq_dec"   # Sequence markers
+
+  bottom: "encode3_h"   # Dummy input h (required by `expose_hidden: true`)
+  bottom: "encode3_c"   # Dummy input c
+
+  top: "decode1"
+  top: "decode1_h"    # Final hidden state (Shape: 1 x N x C x H x W)
+  top: "decode1_c"    # Final cell state
+
+  recurrent_param {
+    expose_hidden: true
+  }
+
+  lstm_debug_param{    
+    axis_hadamard: 3
+    num_axes_hadamard: 2
+  }
+
+  # Conv Layer specification
+  lstm_conv_param {
+    num_output: 64
+    kernel_size: 3
+    pad: 1                  # Padding is required! All conv. kernels need to result in the same H x W shape.
+
+    weight_filler {      
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer{
+  name: "decode1_reshape"
+  type: "Reshape"
+  bottom: "decode1"
+  top: "decode1_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 64
+      dim: 13
+      dim: 13
+    }
+  }
+}
+
+layer {
+  name: "deconv1"
+  type: "Deconvolution"
+  bottom: "decode1_rs"
+  top: "deconv1"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 32
+    kernel_size: 3
+    stride: 2
+    pad: 0
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu4"
+  type: "ReLU"
+  bottom: "deconv1"
+  top: "relu4"
+  relu_param{
+  negative_slope: 0.2
+  }
+}
+
+layer{
+  name: "relu4_reshape"
+  type: "Reshape"
+  bottom: "relu4"
+  top: "relu4_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 1
+      dim: 32
+      dim: 27
+      dim: 27
+    }
+  }
+}
+
+layer {
+  name: "decode_lstm2"
+  type: "ConvLSTM"
+
+  bottom: "relu4_rs"     # Input features x
+  bottom: "seq_dec"   # Sequence markers
+
+  bottom: "encode2_h"   # Dummy input h (required by `expose_hidden: true`)
+  bottom: "encode2_c"   # Dummy input c
+
+  top: "decode2"
+  top: "decode2_h"    # Final hidden state (Shape: 1 x N x C x H x W)
+  top: "decode2_c"    # Final cell state
+
+  recurrent_param {
+    expose_hidden: true
+  }
+
+  lstm_debug_param{    
+    axis_hadamard: 3
+    num_axes_hadamard: 2
+  }
+
+  # Conv Layer specification
+  lstm_conv_param {
+    num_output: 32
+    kernel_size: 3
+    pad: 1                  # Padding is required! All conv. kernels need to result in the same H x W shape.
+
+    weight_filler {      
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer{
+  name: "decode2_reshape"
+  type: "Reshape"
+  bottom: "decode2"
+  top: "decode2_rs"
+  reshape_param{
+    shape{
+      dim: 5
+      dim: 32
+      dim: 27
+      dim: 27
+    }
+  }
+}
+layer {
+  name: "deconv2"
+  type: "Deconvolution"
+  bottom: "decode2_rs"
+  top: "deconv2"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 16
+    kernel_size: 3
+    stride: 2
+    pad: 0
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu5"
+  type: "ReLU"
+  bottom: "deconv2"
+  top: "relu5"
+  relu_param{
+  negative_slope: 0.2
+  }
+}
+
+
+layer{
+  name: "relu5_reshape"
+  type: "Reshape"
+  bottom: "relu5"
+  top: "relu5_rs"
+  reshape_param{
+    shape{
+      dim: 5 
+      dim: 1
+      dim: 16
+      dim: 55
+      dim: 55
+    }
+  }
+}
+
+layer {
+  name: "decode_lstm3"
+  type: "ConvLSTM"
+
+  bottom: "relu5_rs"     # Input features x
+  bottom: "seq_dec"   # Sequence markers
+
+  bottom: "encode1_h"   # Dummy input h (required by `expose_hidden: true`)
+  bottom: "encode1_c"   # Dummy input c
+
+  top: "decode3"
+  top: "decode3_h"    # Final hidden state (Shape: 1 x N x C x H x W)
+  top: "decode3_c"    # Final cell state
+
+  recurrent_param {
+    expose_hidden: true
+  }
+
+  lstm_debug_param{    
+    axis_hadamard: 3
+    num_axes_hadamard: 2
+  }
+
+  # Conv Layer specification
+  lstm_conv_param {
+    num_output: 16
+    kernel_size: 3
+    pad: 1                  # Padding is required! All conv. kernels need to result in the same H x W shape.
+
+    weight_filler {      
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer{
+  name: "decode3_reshape"
+  type: "Reshape"
+  bottom: "decode3"
+  top: "decode3_rs"
+  reshape_param{
+    shape{
+      dim: 5
+      dim: 16
+      dim: 55
+      dim: 55
+    }
+  }
+}
+
+layer {
+  name: "deconv3"
+  type: "Deconvolution"
+  bottom: "decode3_rs"
+  top: "deconv3"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1
+    kernel_size: 11
+    stride: 4
+    pad: 0
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+# Discard everything we did not use.
+layer {
+  name: "silencium"
+  type: "Silence"
+  bottom: "decode1_h"
+  bottom: "decode1_c"
+  bottom: "decode2_h"
+  bottom: "decode2_c"
+  bottom: "decode3_h"
+  bottom: "decode3_c"
+  bottom: "encode3"
+}
+
+
