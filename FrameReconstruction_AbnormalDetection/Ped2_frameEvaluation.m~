@@ -1,0 +1,185 @@
+close all
+% clear all
+decision_map_path = '/usr/not-backed-up/1_convlstm/Ped2_5frames_AE/';
+addpath('../')
+%gt
+testSeqPath = '/usr/not-backed-up/1_DATABASE/UCSD_Anomaly_Dataset.tar/UCSD_Anomaly_Dataset.v1p2/UCSDped2/Test/';
+
+load(fullfile(testSeqPath,'TestFrameGT_original.mat'))%,'FrameGt')   % FROM UCSD 
+TestFoldersResult = [];
+%%% max and min value of frame_error
+% min_error = [];
+% max_error = [];
+
+% for folders = 1:36
+%     frame_error = h5read(fullfile(decision_map_path,['test_' num2str(folders) '_error.h5']),'/frame_error');
+%     size(frame_error)
+%     %   --------- smooth the error ----------------
+%     nfr_sm = 5; % 5 give the best results
+%     nSam = size(frame_error,1);
+%     frame_error_sm = zeros(nSam-nfr_sm,1);
+%     for fr = 1:nSam-nfr_sm
+%         frame_error_sm(fr) = mean(frame_error(fr:fr+nfr_sm));
+%     end
+%     frame_error = frame_error_sm;
+%     %--------------------------------------
+%     min_error(folders) = min(frame_error);
+%     max_error(folders) = max(frame_error);
+% end
+
+% for numTestFolders = 1
+%     numTestFolders    
+%     frame_error = h5read(fullfile(decision_map_path,['test_' num2str(numTestFolders) '_error.h5']),'/frame_error');    
+%     %   --------- smooth the error ----------------
+% %     nfr_sm = 5; % 5 give the best results
+% %     nSam = size(frame_error,1);
+% %     frame_error_sm = zeros(nSam-nfr_sm,1);
+% %     for fr = 1:nSam-nfr_sm
+% %         frame_error_sm(fr) = mean(frame_error(fr:fr+nfr_sm));
+% %     end
+% %     frame_error = frame_error_sm;
+%     %  --------------------------------------------
+%     frame_error = (frame_error - min(frame_error));
+%     frame_error = frame_error / max(frame_error);  
+% end
+% figure
+% plot(1:size(frame_error,1),frame_error)
+% 
+%% 
+for numTestFolders = 1:12
+    numTestFolders
+    frameGt = FrameGt{1,numTestFolders};
+    frame_error = h5read(fullfile(decision_map_path,['test_' num2str(numTestFolders) '_error.h5']),'/frame_error');        
+    %   --------- smooth the error ----------------
+%     nfr_sm = 5; % 5 give the best results
+%     nSam = size(frame_error,1);
+%     frame_error_sm = zeros(nSam-nfr_sm,1);
+%     for fr = 1:nSam-nfr_sm
+%         frame_error_sm(fr) = mean(frame_error(fr:fr+nfr_sm));
+%     end
+%     frame_error = frame_error_sm;
+    %  --------------------------------------------
+%     min(frame_error)    
+    frame_error = (frame_error - min(frame_error));    
+    frame_error = frame_error / max(frame_error);        
+% GLOBAL NORMALIZATION -> WORSE RESULT    
+%     frame_error = (frame_error - min(min_error));
+%     frame_error = frame_error / max(max_error);        
+    
+    nSam = size(frame_error,1);
+    cur_gt = frameGt(2:nSam+4);
+%     cur_gt = frameGt(6:nSam+5);
+    Result = [];
+    for thres = 0:0.01:1 
+        MyMask = frame_error >= thres;
+        MyMask = MyMask';
+        cur_mask = MyMask(1:nSam);        
+        PosFrame = sum(cur_gt);
+        NegFrame = sum(not(cur_gt));
+        TPFr = sum(and(cur_gt,cur_mask));
+        FPFr = sum(and(not(cur_gt),cur_mask));
+        Result = [Result [thres; TPFr;PosFrame;FPFr;NegFrame]];     
+    end
+    TestFoldersResult(:,:,numTestFolders) = Result;
+end
+% save(fullfile(savePath1,'PixelAbMap_FrameLevel.mat'),'TestFoldersResult')
+%% DRAW ROC curve
+TestFoldersResult_ = sum(TestFoldersResult(2:end,:,:),3);
+% frame level
+Thresh = TestFoldersResult(1,:,numTestFolders);
+FrameLevel = zeros(3,size(Thresh,2));
+FrameLevel(1,:) =  Thresh;
+FrameLevel(2,:) = TestFoldersResult_(1,:)./TestFoldersResult_(2,:); %TPR
+FrameLevel(3,:) = TestFoldersResult_(3,:)./TestFoldersResult_(4,:); % FPR
+FrameLevel(:,end+1) = [FrameLevel(1,end)+0.1 0 0];
+%
+% Area Under Curve
+FrameAUC = trapz(FrameLevel(3,:),FrameLevel(2,:));
+sprintf('AUC for Frame level ROC: %d', FrameAUC)
+% [x_frame,y_frame] = EER(FrameLevel(3,:),FrameLevel(2,:));
+x_frame = EER(FrameLevel(3,:),FrameLevel(2,:));
+sprintf('patial pixel EER: %d',x_frame)
+% save(fullfile(savePath1,'Frame_EER_AUC_ver2.mat'),'FrameAUC','x_frame')
+% quit;
+figure
+plot(FrameLevel(3,:),FrameLevel(2,:),'gs-')
+title('ROC curve on Ped1 dataset')
+xlabel('FPR')
+ylabel('TPR')
+legend('Frame level','Location','NorthWest')
+hold on
+x = 0:0.1:1;
+y = 1 - x;
+plot(y,x,'r:')               
+
+%% LSTM PAPER EVALUATION
+
+% for numTestFolders = 1:12
+%     numTestFolders
+%     frameGt = FrameGt{1,numTestFolders};
+%     frame_error = h5read(fullfile(decision_map_path,['test_' num2str(numTestFolders) '_error.h5']),'/frame_error');    
+%     frame_error = single(frame_error);
+%     %   --------- smooth the error ----------------
+% %     nfr_sm = 5; % 5 give the best results
+% %     nSam = size(frame_error,1);
+% %     frame_error_sm = zeros(nSam-nfr_sm,1);
+% %     for fr = 1:nSam-nfr_sm
+% %         frame_error_sm(fr) = mean(frame_error(fr:fr+nfr_sm));
+% %     end
+% %     frame_error = frame_error_sm;
+%     %  --------------------------------------------
+% %     min(frame_error)    
+%     frame_error = (frame_error - min(frame_error));
+%     
+%     frame_error = frame_error / max(frame_error);        
+% % GLOBAL NORMALIZATION -> WORSE RESULT    
+% %     frame_error = (frame_error - min(min_error));
+% %     frame_error = frame_error / max(max_error);        
+%     
+%     nSam = size(frame_error,1);
+% %     cur_gt = frameGt(9:nSam+8);
+%     cur_gt = frameGt(6:nSam+5);
+%     Result = [];
+%     for thres = 0:0.01:1 
+%         MyMask = frame_error >= thres;
+%         MyMask = MyMask';
+%         cur_mask = MyMask(1:nSam);        
+%         PosFrame = sum(cur_gt);
+%         NegFrame = sum(not(cur_gt));
+%         TPFr = sum(and(cur_gt,cur_mask));
+%         FPFr = sum(and(not(cur_gt),cur_mask));
+%         Result = [Result [thres; TPFr;PosFrame;FPFr;NegFrame]];     
+%     end
+%     TestFoldersResult(:,:,numTestFolders) = Result;
+% end
+% % save(fullfile(savePath1,'PixelAbMap_FrameLevel.mat'),'TestFoldersResult')
+% %% DRAW ROC curve
+% TestFoldersResult_ = sum(TestFoldersResult(2:end,:,:),3);
+% % frame level
+% Thresh = TestFoldersResult(1,:,numTestFolders);
+% FrameLevel = zeros(3,size(Thresh,2));
+% FrameLevel(1,:) =  Thresh;
+% FrameLevel(2,:) = TestFoldersResult_(1,:)./TestFoldersResult_(2,:); %TPR
+% FrameLevel(3,:) = TestFoldersResult_(3,:)./TestFoldersResult_(4,:); % FPR
+% FrameLevel(:,end+1) = [FrameLevel(1,end)+0.1 0 0];
+% %
+% % Area Under Curve
+% FrameAUC = trapz(FrameLevel(3,:),FrameLevel(2,:));
+% sprintf('AUC for Frame level ROC: %d', FrameAUC)
+% % [x_frame,y_frame] = EER(FrameLevel(3,:),FrameLevel(2,:));
+% x_frame = EER(FrameLevel(3,:),FrameLevel(2,:));
+% sprintf('patial pixel EER: %d',x_frame)
+% % save(fullfile(savePath1,'Frame_EER_AUC_ver2.mat'),'FrameAUC','x_frame')
+% % quit;
+% figure
+% plot(FrameLevel(3,:),FrameLevel(2,:),'gs-')
+% title('ROC curve on Ped1 dataset')
+% xlabel('FPR')
+% ylabel('TPR')
+% legend('Frame level','Location','NorthWest')
+% hold on
+% x = 0:0.1:1;
+% y = 1 - x;
+% plot(y,x,'r:')    
+
+
